@@ -70,18 +70,18 @@ constraints (anonymized experience labels, no fabricated metrics/status,
 the CSS grid `min-width: auto` overflow gotcha this codebase hit once,
 etc.) — it's written for whoever (human or agent) touches this repo next.
 
-## Adding the résumé
+## The résumé
 
-The résumé PDF is intentionally not included. To enable the résumé
-preview/download:
+The résumé PDF lives at `public/resume/Parva_Barot_Software_Resume.pdf`
+(filename must match `site.resumePath` in `src/data/portfolio.ts`). Its
+contents are not edited by this codebase — `src/lib/resume.ts` only
+checks that the file exists.
 
-1. Add the file at `public/resume/Parva_Barot_Software_Resume.pdf`
-   (filename must match `site.resumePath` in `src/data/portfolio.ts`).
-2. Nothing else changes — `/resume` and the hero's download button detect
-   the file automatically.
-
-Until the file is present, `/resume` shows an honest "Résumé file not
-configured" state rather than a broken link.
+`/resume` and the hero's download button detect the file automatically
+via that check, evaluated at build time (the page is statically
+prerendered). If the file is ever removed, both fall back to an honest
+"Résumé file not configured" state instead of a broken link, and a
+rebuild is required either way for the change to take effect.
 
 ## Testing
 

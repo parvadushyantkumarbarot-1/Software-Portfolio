@@ -48,13 +48,29 @@ test.describe("smoke", () => {
     await expect(page.getByText(/^live$/i)).toHaveCount(0);
   });
 
-  test("resume page shows an honest not-configured state", async ({
+  test("resume page offers a working preview and download", async ({
     page,
+    request,
   }) => {
     await page.goto("/resume");
-    await expect(
-      page.getByText("Résumé file not configured")
-    ).toBeVisible();
+    await expect(page.getByText("Résumé file not configured")).toHaveCount(
+      0
+    );
+
+    const downloadHref = await page
+      .getByRole("link", { name: "Download PDF" })
+      .getAttribute("href");
+    expect(downloadHref).toBe("/resume/Parva_Barot_Software_Resume.pdf");
+
+    const pdfResponse = await request.get(downloadHref!);
+    expect(pdfResponse.status()).toBe(200);
+    expect(pdfResponse.headers()["content-type"]).toBe("application/pdf");
+
+    await page.getByRole("button", { name: "Preview Résumé" }).click();
+    const dialog = page.getByRole("dialog", { name: "Résumé preview" });
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
   });
 
   test("mobile nav drawer opens and closes with Escape", async ({
