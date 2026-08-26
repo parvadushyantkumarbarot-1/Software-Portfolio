@@ -11,7 +11,7 @@ data. Pages and components render that data; they do not hardcode copy.
 ## Development commands
 
 ```bash
-npm run dev         # start the dev server (Turbopack)
+npm run dev         # start the dev server (webpack)
 npm run build        # production build
 npm run start        # serve the production build (after build)
 npm run lint         # ESLint
@@ -23,6 +23,42 @@ npm run test:watch   # Vitest in watch mode
 Node 20+ and npm are assumed. There is no database and no required
 environment variables — the site has no backend beyond a server-side,
 best-effort GitHub API call (see below).
+
+### Next.js version is pinned deliberately — do not casually bump to 16.x
+
+This project was first built on Next.js 16.3.3 (`latest` at the time). That
+version deployed cleanly to `next build`/`next start` locally but returned a
+platform-level `NOT_FOUND` (`X-Vercel-Error: NOT_FOUND`) for every route once
+deployed to Vercel, despite Vercel reporting the build itself as "Ready" and
+the domain being correctly assigned to that production deployment. Next 16
+shipped a new, alpha "Build Adapters API" the same day, and the most likely
+explanation is that Vercel's platform adapter hadn't caught up yet to that
+exact release.
+
+The fix was downgrading to `next@15.5.24` / `eslint-config-next@15.5.24` —
+the security-**backport** release on the 15.x line (check `npm view next
+dist-tags` for the current `backport` tag before assuming 15.5.24 is still
+current), not the plain 15.3.x line, which still carries several patched
+Next.js CVEs. This also reverted the build to webpack (Next 15 doesn't
+default `next build` to Turbopack the way 16 does), which is the most
+battle-tested path on Vercel.
+
+Two follow-on effects if you touch Next.js version pins:
+
+- `eslint-config-next` on the 15.x line ships legacy `.eslintrc`-shaped
+  configs, not ESLint 9 flat config. `eslint.config.mjs` bridges this with
+  `FlatCompat` from `@eslint/eslintrc`. If you upgrade to a 16.x line where
+  `eslint-config-next` exports flat config natively, you can drop the
+  `FlatCompat` bridge — check `node_modules/eslint-config-next/core-web-vitals.js`
+  first to see which shape it actually exports.
+- Next 15 requires `"jsx": "preserve"` in `tsconfig.json` (Next 16 wants
+  `"react-jsx"`); `next build` will rewrite this for you if it's wrong, but
+  don't hand-revert it back to `react-jsx` while on the 15.x line.
+
+Before upgrading Next.js again: build locally, then **actually deploy and
+curl the live URL** (`curl -I` looking for `X-Vercel-Error`) before
+declaring it fixed — a clean local build proves nothing about Vercel's
+adapter compatibility with a very recently published release.
 
 ## Architecture conventions
 
